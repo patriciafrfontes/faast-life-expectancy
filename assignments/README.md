@@ -1,3 +1,5 @@
+[![CI](https://github.com/patriciafrfontes/faast-life-expectancy/actions/workflows/ci.yml/badge.svg)](https://github.com/patriciafrfontes/faast-life-expectancy/actions/workflows/ci.yml)
+
 # FAAST Advance Foundations Assignments
 
 ## Introduction
@@ -26,15 +28,14 @@ Now you're ready to go!
 
 1. Clone the Faast-Foundations repo and, from it, create a new repo with just the assignments:
 
-    ```bash
-    git clone git@github.com:nosportugal/faast-foundations.git
-    cp -r faast-foundations/assignments assignments
-    cd assignments
-    git init
-    ```
+   ```bash
+   git clone git@github.com:nosportugal/faast-foundations.git
+   cp -r faast-foundations/assignments assignments
+   cd assignments
+   git init
+   ```
 
-    You will be later pushing this new repo to your personal GitHub account.
-
+   You will be later pushing this new repo to your personal GitHub account.
 2. Create a virtual environment with `python -m venv .venv`. If you are using conda, you can create a virtual environment with `conda create --name foundations pip`.
 3. Activate the virtual environment with `source .venv/bin/activate` or `.venv\Scripts\activate` on Windows. Or, if you are on conda, activate the environment with `conda activate foundations`.
 
