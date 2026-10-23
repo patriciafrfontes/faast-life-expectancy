@@ -23,13 +23,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install "setuptools<80"
-        pip install -e ".[dev]"
+        pip install -e "./assignments[dev]"
         pip install pylint pytest-cov
 
     - name: Run pylint
+      working-directory: assignments
       run: |
         pylint life_expectancy.cleaning
 
     - name: Run pytest
+      working-directory: assignments
       run: |
         pytest life_expectancy --cov
