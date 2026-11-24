@@ -1,18 +1,12 @@
 """Data cleaning module for EU life expectancy dataset."""
 
-from pathlib import Path
 import argparse
 import pandas as pd
 
-PACKAGE_DIR = Path(__file__).resolve().parent
-DATA_DIR = PACKAGE_DIR / "data"
+from .loading import load_data, save_data
+from .region import Region
 
-def load_data() -> pd.DataFrame:
-    """Loads raw life expectancy data from the data directory."""
-    raw_path = DATA_DIR / "eu_life_expectancy_raw.tsv"
-    return pd.read_csv(raw_path, sep="\t")
-
-def clean_data(df: pd.DataFrame, country: str = "PT") -> pd.DataFrame:
+def clean_data(df: pd.DataFrame, country: Region = Region.PT) -> pd.DataFrame:
     """Cleans the life expectancy data for a given country."""
     first_col = df.columns[0]
     df_split = df.copy()
@@ -32,14 +26,9 @@ def clean_data(df: pd.DataFrame, country: str = "PT") -> pd.DataFrame:
     df_long = df_long.dropna(subset=["value"])
     df_long["value"] = df_long["value"].astype(float)
 
-    return df_long[df_long["region"] == country].reset_index(drop=True)
+    return df_long[df_long["region"] == country.value].reset_index(drop=True)
 
-def save_data(df: pd.DataFrame, country: str = "PT") -> None:
-    """Saves cleaned dataframe to a CSV file without numerical index."""
-    output_path = DATA_DIR / f"{country.lower()}_life_expectancy.csv"
-    df.to_csv(output_path, index=False)
-
-def main(country: str = "PT") -> pd.DataFrame:
+def main(country: Region = Region.PT) -> pd.DataFrame:
     """Main function to load, clean, and save life expectancy data."""
     df_raw = load_data()
     df_cleaned = clean_data(df_raw, country=country)
@@ -51,7 +40,8 @@ if __name__ == "__main__":  # pragma: no cover
         description="Clean EU life expectancy data.")
     parser.add_argument(
         "--country",
-        default="PT",
+        choices=[region.value for region in Region],
+        default=Region.PT.value,
         help="Country code (e.g., 'PT' for Portugal)")
     args = parser.parse_args()
-    main(country=args.country)
+    main(country=Region(args.country))
