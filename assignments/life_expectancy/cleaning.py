@@ -1,48 +1,33 @@
 """Data cleaning module for EU life expectancy dataset."""
 
-from pathlib import Path
 import argparse
+from pathlib import Path
+from typing import Optional
 import pandas as pd
 
-PACKAGE_DIR = Path(__file__).resolve().parent
-DATA_DIR = PACKAGE_DIR / "data"
+from .loading import JSON_PATH, TSV_PATH, load_data, save_data
+from .region import Region
+from .strategies import DataStrategy, TSVStrategy, get_strategy
 
-def load_data() -> pd.DataFrame:
-    """Loads raw life expectancy data from the data directory."""
-    raw_path = DATA_DIR / "eu_life_expectancy_raw.tsv"
-    return pd.read_csv(raw_path, sep="\t")
+FORMATS = {
+    "tsv": TSV_PATH,
+    "json": JSON_PATH,
+}
 
-def clean_data(df: pd.DataFrame, country: str = "PT") -> pd.DataFrame:
+def clean_data(
+    df: pd.DataFrame,
+    country: Region = Region.PT,
+    strategy: Optional[DataStrategy] = None,
+) -> pd.DataFrame:
     """Cleans the life expectancy data for a given country."""
-    first_col = df.columns[0]
-    df_split = df.copy()
-    df_split[["unit", "sex", "age", "region"]] = (
-        df_split[first_col].str.split(",", expand=True)
-    )
-    df_split = df_split.drop(columns=[first_col])
+    strategy = strategy or TSVStrategy()
+    return strategy.clean(df, country)
 
-    df_long = df_split.melt(
-        id_vars=["unit", "sex", "age", "region"],
-        var_name="year",
-        value_name="value",
-    )
-
-    df_long["year"] = df_long["year"].str.extract(r"(\d+)")[0].astype(int)
-    df_long["value"] = df_long["value"].str.extract(r"(\d+\.?\d*)")[0]
-    df_long = df_long.dropna(subset=["value"])
-    df_long["value"] = df_long["value"].astype(float)
-
-    return df_long[df_long["region"] == country].reset_index(drop=True)
-
-def save_data(df: pd.DataFrame, country: str = "PT") -> None:
-    """Saves cleaned dataframe to a CSV file without numerical index."""
-    output_path = DATA_DIR / f"{country.lower()}_life_expectancy.csv"
-    df.to_csv(output_path, index=False)
-
-def main(country: str = "PT") -> pd.DataFrame:
+def main(country: Region = Region.PT, file_path: Path = TSV_PATH) -> pd.DataFrame:
     """Main function to load, clean, and save life expectancy data."""
-    df_raw = load_data()
-    df_cleaned = clean_data(df_raw, country=country)
+    strategy = get_strategy(file_path)
+    df_raw = load_data(file_path, strategy)
+    df_cleaned = clean_data(df_raw, country=country, strategy=strategy)
     save_data(df_cleaned, country=country)
     return df_cleaned
 
@@ -51,7 +36,13 @@ if __name__ == "__main__":  # pragma: no cover
         description="Clean EU life expectancy data.")
     parser.add_argument(
         "--country",
-        default="PT",
+        choices=[region.value for region in Region],
+        default=Region.PT.value,
         help="Country code (e.g., 'PT' for Portugal)")
+    parser.add_argument(
+        "--format",
+        choices=list(FORMATS),
+        default="tsv",
+        help="Format of the raw data file")
     args = parser.parse_args()
-    main(country=args.country)
+    main(country=Region(args.country), file_path=FORMATS[args.format])
