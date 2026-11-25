@@ -18,3 +18,7 @@ def eu_life_expectancy_expected() -> pd.DataFrame:
     return pd.read_csv(FIXTURES_DIR / "eu_life_expectancy_expected.csv")
 
 
+@pytest.fixture(scope="session")
+def eurostat_life_expect_raw() -> pd.DataFrame:
+    """Fixture to load the raw JSON input sample."""
+    return pd.read_json(FIXTURES_DIR / "eurostat_life_expect.json")

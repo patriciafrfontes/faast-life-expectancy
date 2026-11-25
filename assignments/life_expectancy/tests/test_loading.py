@@ -1,22 +1,34 @@
 """Tests for the loading and saving module."""
 
+from pathlib import Path
 from unittest.mock import Mock, patch
 import pandas as pd
 
 from life_expectancy.loading import load_data, save_data
 from life_expectancy.region import Region
 
+from . import FIXTURES_DIR
 
-@patch("life_expectancy.loading.pd.read_csv")
-def test_load_data(mock_read_csv: Mock) -> None:
-    """Test load_data reads data from raw file using a mock."""
+
+def test_load_data_uses_strategy() -> None:
+    """Test load_data delegates loading to the given strategy."""
     dummy_df = pd.DataFrame({"col1": [1, 2]})
-    mock_read_csv.return_value = dummy_df
+    mock_strategy = Mock()
+    mock_strategy.load.return_value = dummy_df
 
-    actual_df = load_data()
+    actual_df = load_data(Path("some_file"), mock_strategy)
 
-    mock_read_csv.assert_called_once()
+    mock_strategy.load.assert_called_once_with(Path("some_file"))
     pd.testing.assert_frame_equal(actual_df, dummy_df)
+
+
+def test_load_data_picks_strategy_from_extension(
+    eurostat_life_expect_raw: pd.DataFrame,
+) -> None:
+    """Test load_data chooses the strategy when none is given."""
+    actual_df = load_data(FIXTURES_DIR / "eurostat_life_expect.json")
+
+    pd.testing.assert_frame_equal(actual_df, eurostat_life_expect_raw)
 
 
 @patch("pandas.DataFrame.to_csv")

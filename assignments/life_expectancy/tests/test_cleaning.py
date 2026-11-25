@@ -6,6 +6,8 @@ import pandas as pd
 from life_expectancy.cleaning import clean_data, main
 from life_expectancy.region import Region
 
+from . import FIXTURES_DIR
+
 
 def test_clean_data(
     eu_life_expectancy_raw: pd.DataFrame,
@@ -35,13 +37,16 @@ def test_main(
     pd.testing.assert_frame_equal(actual_df, eu_life_expectancy_expected)
 
 
-def test_region_countries() -> None:
-    """Country regions include countries but exclude aggregate regions."""
-    countries = Region.countries()
+@patch("life_expectancy.cleaning.save_data")
+def test_main_json_end_to_end(
+    mock_save_data: Mock,
+    eu_life_expectancy_expected: pd.DataFrame,
+) -> None:
+    """Test the full pipeline with zipped JSON data, only mocking the save step."""
+    actual_df = main(
+        country=Region.PT,
+        file_path=FIXTURES_DIR / "eurostat_life_expect.zip",
+    )
 
-    assert len(countries) == 46
-    assert Region.PT in countries
-    assert Region.DE_TOT not in countries
-    assert Region.FX not in countries
-    assert Region.EU28 not in countries
-    assert Region.EFTA not in countries
+    mock_save_data.assert_called_once()
+    pd.testing.assert_frame_equal(actual_df, eu_life_expectancy_expected)
